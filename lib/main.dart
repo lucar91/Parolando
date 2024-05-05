@@ -1,92 +1,272 @@
 import 'package:flutter/material.dart';
 
-void main() => runApp(const MyApp());
+void main() {
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-  static const String _title = 'Flutter Stateful Clicker Counter';
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: _title,
-      theme: ThemeData(
-        // useMaterial3: false,
-        primarySwatch: Colors.blue,
-      ),
-      home: const MyHomePage(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => HomePage(),
+        '/lista': (context) => ListaPage(),
+      },
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key});
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-  // This class is the configuration for the state.
-  @override
-  _MyHomePageState createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
-
+class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: const Text('Flutter Demo Click Counter'),
+        title: Text('Home'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.login),
+            onPressed: () {
+              // Implementa la logica per il login
+            },
+          ),
+        ],
       ),
       body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
           mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+          children: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/lista');
+              },
+              child: Text('Apri la lista'),
             ),
-            Text(
-              '$_counter',
-              style: const TextStyle(fontSize: 25),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                // Qui puoi gestire la seconda scelta
+              },
+              child: Text('Seconda scelta'),
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+    );
+  }
+}
+
+class ListaPage extends StatefulWidget {
+  @override
+  _ListaPageState createState() => _ListaPageState();
+}
+
+class _ListaPageState extends State<ListaPage> {
+  late List<String> items;
+  int? selectedIndex;
+  TextEditingController _textEditingController = TextEditingController();
+
+  late List<dynamic> arrayInformazioni; // Dichiarazione di arrayInformazioni
+  late List<bool> disableRow; // Dichiarazione di disableRow
+  int score = 0; // Punteggio iniziale
+
+  @override
+  void initState() {
+    super.initState();
+    arrayInformazioni = [
+      5,
+      ['G', 'a', 't', 'o', 'l', 'b', 'e', 'r', 'c', 'i', 's'],
+      ['Gatto', 'Albero', 'Cielo', 'Libro', 'Cascata']
+    ];
+    items = generateItems();
+    disableRow = List<bool>.filled(
+        arrayInformazioni[2].length, false); // Inizializzazione di disableRow
+  }
+
+  List<String> generateItems() {
+    final List<String> words = List<String>.from(arrayInformazioni[2]);
+
+    final List<String> result = [];
+
+    for (int i = 0; i < words.length; i++) {
+      final String word = words[i];
+      final String dashes = ''.padRight(word.length, '_ ');
+
+      result.add('$dashes');
+    }
+
+    return result;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return WillPopScope(
+      onWillPop: () async {
+        return await showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: Text('Sei sicuro di voler uscire?'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: Text('No'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: Text('Sì'),
+                  ),
+                ],
+              ),
+            ) ??
+            false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Gioca'),
+        ),
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Punteggio: $score'),
+                  Text('Livello ${getCurrentLevel()}'),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  return InkWell(
+                    onTap: () {
+                      // Ignora l'azione se l'elemento è disabilitato
+                      if (disableRow[index]) {
+                        return;
+                      }
+                      setState(() {
+                        selectedIndex = index;
+                        _textEditingController.text = '';
+                      });
+                    },
+                    child: Container(
+                      color: selectedIndex == index
+                          ? Colors.yellow
+                          : disableRow[index]
+                              ? Colors.green
+                              : Colors.white,
+                      child: ListTile(
+                        title: Text(
+                          items[index],
+                          style: TextStyle(
+                            backgroundColor: Colors.transparent,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _textEditingController,
+                      decoration: InputDecoration(
+                        hintText: selectedIndex != null
+                            ? '${items[selectedIndex!].length / 2} letters'
+                            : 'Modifica la parola',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () {
+                      _checkWord(selectedIndex,
+                          insertedWord: _textEditingController.text);
+                    },
+                    child: Text('Ok'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  bool _checkWord(int? index, {String? insertedWord}) {
+    if (index != null && index >= 0 && index < items.length) {
+      final currentWord = arrayInformazioni[2][index];
+      final isWordInList = insertedWord != null && currentWord == insertedWord;
+      print('Ecco $insertedWord e $currentWord e $selectedIndex');
+      setState(() {
+        if (isWordInList) {
+          score += items[index].length; // Incrementa il punteggio
+          items[index] = insertedWord!;
+          selectedIndex = getNextIndex(index); // Passa all'indice successivo
+          disableRow[index] = true; // Imposta l'elemento come disabilitato
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Perfetto'),
+              duration: Duration(seconds: 1), // Durata del popup: 1 secondo
+            ),
+          );
+          // Verifica se tutte le parole sono disabilitate
+          if (disableRow.every((element) => element)) {
+            // Mostra il messaggio "Livello Completato"
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Livello Completato'),
+                duration: Duration(seconds: 1), // Durata del popup: 1 secondo
+              ),
+            );
+            selectedIndex = null; // Resetta selectedIndex a null
+          }
+        } else {
+          // Mostra il messaggio di errore come SnackBar
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Riprova'),
+              duration: Duration(seconds: 1), // Durata del popup: 1 secondo
+            ),
+          );
+          // Non passare all'indice successivo
+        }
+        _textEditingController
+            .clear(); // Svuota il contenuto della casella di testo
+      });
+
+      return isWordInList;
+    }
+    return false;
+  }
+
+  int getCurrentLevel() {
+    // La funzione per ottenere il livello corrente qui
+    return 1; // Esempio di livello fisso (da modificare)
+  }
+
+  int getNextIndex(int currentIndex) {
+    final nextIndex = currentIndex + 1;
+    if (nextIndex >= items.length) {
+      return 0; // Torna all'inizio se l'indice successivo supera la lunghezza dell'array
+    } else {
+      // Controlla se l'elemento successivo è già disabilitato
+      if (disableRow[nextIndex]) {
+        return getNextIndex(
+            nextIndex); // Cerca l'indice successivo non disabilitato
+      } else {
+        return nextIndex;
+      }
+    }
   }
 }
