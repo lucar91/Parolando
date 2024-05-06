@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -68,7 +69,8 @@ class _ListaPageState extends State<ListaPage> {
 
   late List<dynamic> arrayInformazioni; // Dichiarazione di arrayInformazioni
   late List<bool> disableRow; // Dichiarazione di disableRow
-  int score = 0; // Punteggio iniziale
+
+  int score = 0;
 
   @override
   void initState() {
@@ -127,16 +129,6 @@ class _ListaPageState extends State<ListaPage> {
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Punteggio: $score'),
-                  Text('Livello ${getCurrentLevel()}'),
-                ],
-              ),
-            ),
             Expanded(
               child: ListView.builder(
                 itemCount: items.length,
@@ -190,7 +182,7 @@ class _ListaPageState extends State<ListaPage> {
                   ElevatedButton(
                     onPressed: () {
                       _checkWord(selectedIndex,
-                          insertedWord: _textEditingController.text);
+                          replacement: _textEditingController.text);
                     },
                     child: Text('Ok'),
                   ),
@@ -199,50 +191,139 @@ class _ListaPageState extends State<ListaPage> {
             ),
           ],
         ),
+        bottomNavigationBar: BottomAppBar(
+          child: Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Punteggio: $score',
+                  style: TextStyle(fontSize: 18.0),
+                ),
+                Text(
+                  'Livello ${getCurrentLevel()}',
+                  style: TextStyle(fontSize: 18.0),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
 
-  bool _checkWord(int? index, {String? insertedWord}) {
+  void _showPopup(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(message),
+          actions: <Widget>[
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                if (message == 'Completato') {
+                  setState(() {
+                    selectedIndex = null;
+                  });
+                }
+              },
+              child: Text('Chiudi'),
+            ),
+            if (message == 'Completato')
+              ElevatedButton(
+                onPressed: () {
+                  // Vai al livello successivo
+                },
+                child: Text('Livello Successivo'),
+              ),
+            if (message == 'Completato')
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.popUntil(context, ModalRoute.withName('/'));
+                },
+                child: Text('Home'),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  int getCurrentLevel() {
+    // Implementa la logica per ottenere il numero del livello corrente
+    return 1;
+  }
+
+  void _showScorePopup(int points) {
+    // Pulisce la text area prima di mostrare il popup del punteggio
+    _textEditingController.clear();
+
+    OverlayEntry overlayEntry;
+    overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: MediaQuery.of(context).size.height * 0.4,
+        left: MediaQuery.of(context).size.width * 0.4,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.7),
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+            padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Text(
+              '+$points',
+              style: TextStyle(color: Colors.white, fontSize: 24.0),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    Overlay.of(context)!.insert(overlayEntry);
+
+    // Rimuove il popup dopo un breve periodo di tempo
+    Future.delayed(Duration(milliseconds: 800), () {
+      overlayEntry.remove();
+    });
+  }
+
+  bool _checkWord(int? index, {String? replacement}) {
     if (index != null && index >= 0 && index < items.length) {
-      final currentWord = arrayInformazioni[2][index];
-      final isWordInList = insertedWord != null && currentWord == insertedWord;
-      print('Ecco $insertedWord e $currentWord e $selectedIndex');
+      final List<String> words = List<String>.from(arrayInformazioni[2]);
+
+      final isWordInList = replacement != null &&
+          words[index].toLowerCase() == replacement.toLowerCase();
+      print('Ecco $replacement e ${words[index]} e $selectedIndex');
       setState(() {
         if (isWordInList) {
-          score += items[index].length; // Incrementa il punteggio
-          items[index] = insertedWord!;
-          selectedIndex = getNextIndex(index); // Passa all'indice successivo
-          disableRow[index] = true; // Imposta l'elemento come disabilitato
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Perfetto'),
-              duration: Duration(seconds: 1), // Durata del popup: 1 secondo
-            ),
-          );
-          // Verifica se tutte le parole sono disabilitate
+          score += items[index].length;
+          items[index] = replacement!;
+          selectedIndex = getNextIndex(index);
+          disableRow[index] = true;
+          _showScorePopup(items[index].length);
           if (disableRow.every((element) => element)) {
-            // Mostra il messaggio "Livello Completato"
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Livello Completato'),
-                duration: Duration(seconds: 1), // Durata del popup: 1 secondo
-              ),
-            );
-            selectedIndex = null; // Resetta selectedIndex a null
+            _showPopup('Completato');
           }
         } else {
-          // Mostra il messaggio di errore come SnackBar
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Riprova'),
               duration: Duration(seconds: 1), // Durata del popup: 1 secondo
             ),
           );
-          // Non passare all'indice successivo
+          selectedIndex = index;
         }
-        _textEditingController
-            .clear(); // Svuota il contenuto della casella di testo
+      });
+
+      // Pulisce la text area e chiude il popup dopo un certo intervallo di tempo
+      Timer(Duration(seconds: 2), () {
+        setState(() {
+          _textEditingController.clear();
+        });
       });
 
       return isWordInList;
@@ -250,23 +331,12 @@ class _ListaPageState extends State<ListaPage> {
     return false;
   }
 
-  int getCurrentLevel() {
-    // La funzione per ottenere il livello corrente qui
-    return 1; // Esempio di livello fisso (da modificare)
-  }
-
   int getNextIndex(int currentIndex) {
     final nextIndex = currentIndex + 1;
     if (nextIndex >= items.length) {
-      return 0; // Torna all'inizio se l'indice successivo supera la lunghezza dell'array
+      return 0;
     } else {
-      // Controlla se l'elemento successivo è già disabilitato
-      if (disableRow[nextIndex]) {
-        return getNextIndex(
-            nextIndex); // Cerca l'indice successivo non disabilitato
-      } else {
-        return nextIndex;
-      }
+      return nextIndex;
     }
   }
 }
