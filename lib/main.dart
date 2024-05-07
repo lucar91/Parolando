@@ -151,12 +151,23 @@ class _ListaPageState extends State<ListaPage> {
                               ? Colors.green
                               : Colors.white,
                       child: ListTile(
-                        title: Text(
-                          items[index],
-                          style: TextStyle(
-                            backgroundColor: Colors.transparent,
-                          ),
-                        ),
+                        title: selectedIndex == index && disableRow[index]
+                            ? Center(
+                                child: Text(
+                                  items[index].toUpperCase(),
+                                  style: TextStyle(
+                                    backgroundColor: Colors.transparent,
+                                    // Aggiungi altre proprietà di stile se necessario
+                                  ),
+                                ),
+                              )
+                            : Text(
+                                items[index],
+                                style: TextStyle(
+                                  backgroundColor: Colors.transparent,
+                                  // Aggiungi altre proprietà di stile se necessario
+                                ),
+                              ),
                       ),
                     ),
                   );
@@ -304,7 +315,7 @@ class _ListaPageState extends State<ListaPage> {
       setState(() {
         if (isWordInList) {
           score += items[index].length;
-          items[index] = replacement!;
+          items[index] = replacement!.toUpperCase(); // Converte in maiuscolo
           selectedIndex = getNextIndex(index);
           disableRow[index] = true;
           _showScorePopup(items[index].length);
