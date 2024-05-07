@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 void main() {
   runApp(MyApp());
@@ -63,11 +65,12 @@ class ListaPage extends StatefulWidget {
 }
 
 class _ListaPageState extends State<ListaPage> {
-  late List<String> items;
+  late List<String> items = [];
   int? selectedIndex;
   TextEditingController _textEditingController = TextEditingController();
 
-  late List<dynamic> arrayInformazioni; // Dichiarazione di arrayInformazioni
+  late Map<String, dynamic> jsonContent;
+  late Map<String, dynamic> arrayInformazioni;
   late List<bool> disableRow; // Dichiarazione di disableRow
 
   int score = 0;
@@ -75,28 +78,33 @@ class _ListaPageState extends State<ListaPage> {
   @override
   void initState() {
     super.initState();
-    arrayInformazioni = [
-      5,
-      ['G', 'a', 't', 'o', 'l', 'b', 'e', 'r', 'c', 'i', 's'],
-      ['Gatto', 'Albero', 'Cielo', 'Libro', 'Cascata']
-    ];
-    items = generateItems();
-    disableRow = List<bool>.filled(
-        arrayInformazioni[2].length, false); // Inizializzazione di disableRow
+    loadJsonData(); // Carica i dati JSON all'avvio
   }
 
+  // Funzione per caricare i dati JSON
+  Future<void> loadJsonData() async {
+    String jsonString = await rootBundle.loadString('resources/data.json');
+    setState(() {
+      // Converti il JSON in una mappa
+      jsonContent = json.decode(jsonString);
+      // Inizializza arrayInformazioni utilizzando la parola chiave "object"
+      arrayInformazioni = Map<String, dynamic>.from(
+          jsonContent['easy']['level']['1']['object']);
+      // Inizializza il resto del tuo stato
+      items = generateItems();
+      disableRow = List<bool>.filled(arrayInformazioni.length, false);
+    });
+  }
+
+  // Funzione per generare gli elementi iniziali dalla lista JSON
   List<String> generateItems() {
-    final List<String> words = List<String>.from(arrayInformazioni[2]);
-
+    final List<String> words = arrayInformazioni.keys.toList();
     final List<String> result = [];
-
     for (int i = 0; i < words.length; i++) {
       final String word = words[i];
       final String dashes = ''.padRight(word.length, '_ ');
-
       result.add('$dashes');
     }
-
     return result;
   }
 
@@ -151,23 +159,12 @@ class _ListaPageState extends State<ListaPage> {
                               ? Colors.green
                               : Colors.white,
                       child: ListTile(
-                        title: selectedIndex == index && disableRow[index]
-                            ? Center(
-                                child: Text(
-                                  items[index].toUpperCase(),
-                                  style: TextStyle(
-                                    backgroundColor: Colors.transparent,
-                                    // Aggiungi altre proprietà di stile se necessario
-                                  ),
-                                ),
-                              )
-                            : Text(
-                                items[index],
-                                style: TextStyle(
-                                  backgroundColor: Colors.transparent,
-                                  // Aggiungi altre proprietà di stile se necessario
-                                ),
-                              ),
+                        title: Text(
+                          items[index],
+                          style: TextStyle(
+                            backgroundColor: Colors.transparent,
+                          ),
+                        ),
                       ),
                     ),
                   );
@@ -307,7 +304,7 @@ class _ListaPageState extends State<ListaPage> {
 
   bool _checkWord(int? index, {String? replacement}) {
     if (index != null && index >= 0 && index < items.length) {
-      final List<String> words = List<String>.from(arrayInformazioni[2]);
+      final List<String> words = arrayInformazioni.keys.toList();
 
       final isWordInList = replacement != null &&
           words[index].toLowerCase() == replacement.toLowerCase();
@@ -315,7 +312,8 @@ class _ListaPageState extends State<ListaPage> {
       setState(() {
         if (isWordInList) {
           score += items[index].length;
-          items[index] = replacement!.toUpperCase(); // Converte in maiuscolo
+          // Converti la parola indovinata in maiuscolo
+          items[index] = replacement!.toUpperCase();
           selectedIndex = getNextIndex(index);
           disableRow[index] = true;
           _showScorePopup(items[index].length);
