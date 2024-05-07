@@ -170,6 +170,9 @@ class _ListaPageState extends State<ListaPage> {
                   Expanded(
                     child: TextField(
                       controller: _textEditingController,
+                      onSubmitted: (value) {
+                        _checkWord(selectedIndex, replacement: value);
+                      },
                       decoration: InputDecoration(
                         hintText: selectedIndex != null
                             ? '${items[selectedIndex!].length / 2} letters'
@@ -179,12 +182,12 @@ class _ListaPageState extends State<ListaPage> {
                     ),
                   ),
                   SizedBox(width: 8),
-                  ElevatedButton(
+                  IconButton(
+                    icon: Icon(Icons.send),
                     onPressed: () {
                       _checkWord(selectedIndex,
                           replacement: _textEditingController.text);
                     },
-                    child: Text('Ok'),
                   ),
                 ],
               ),
