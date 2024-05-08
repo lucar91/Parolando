@@ -15,6 +15,8 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => HomePage(),
         '/lista': (context) => ListaPage(),
+        '/difficolta': (context) =>
+            DifficoltaPage(), // Aggiunta la route per la pagina di selezione della difficoltà
       },
     );
   }
@@ -41,16 +43,17 @@ class HomePage extends StatelessWidget {
           children: [
             ElevatedButton(
               onPressed: () {
-                Navigator.pushNamed(context, '/lista');
+                Navigator.pushNamed(context,
+                    '/difficolta'); // Naviga alla pagina di selezione della difficoltà
               },
-              child: Text('Apri la lista'),
+              child: Text('Allenamento'), // Modifica il testo del pulsante
             ),
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
                 // Qui puoi gestire la seconda scelta
               },
-              child: Text('Seconda scelta'),
+              child: Text('Sfida'), // Modifica il testo del pulsante
             ),
           ],
         ),
@@ -66,14 +69,13 @@ class ListaPage extends StatefulWidget {
 
 class _ListaPageState extends State<ListaPage> {
   late List<String> items = [];
+  late List<bool> disableRow = [];
   int? selectedIndex;
   TextEditingController _textEditingController = TextEditingController();
 
-  late Map<String, dynamic> jsonContent;
-  late Map<String, dynamic> arrayInformazioni;
-  late List<bool> disableRow; // Dichiarazione di disableRow
+  late Map<String, dynamic> levelWords;
 
-  int score = 0;
+  int score = 0; // Aggiunta la variabile score
 
   @override
   void initState() {
@@ -84,21 +86,21 @@ class _ListaPageState extends State<ListaPage> {
   // Funzione per caricare i dati JSON
   Future<void> loadJsonData() async {
     String jsonString = await rootBundle.loadString('resources/data.json');
+    Map<String, dynamic> jsonContent = json.decode(jsonString);
     setState(() {
-      // Converti il JSON in una mappa
-      jsonContent = json.decode(jsonString);
-      // Inizializza arrayInformazioni utilizzando la parola chiave "object"
-      arrayInformazioni = Map<String, dynamic>.from(
+      // Inizializza levelWords utilizzando la parola chiave "object"
+      levelWords = Map<String, dynamic>.from(
           jsonContent['easy']['level']['1']['object']);
+      // Inizializza disableRow con false per ogni elemento in levelWords
+      disableRow = List<bool>.filled(levelWords.length, false);
       // Inizializza il resto del tuo stato
       items = generateItems();
-      disableRow = List<bool>.filled(arrayInformazioni.length, false);
     });
   }
 
   // Funzione per generare gli elementi iniziali dalla lista JSON
   List<String> generateItems() {
-    final List<String> words = arrayInformazioni.keys.toList();
+    final List<String> words = levelWords.keys.toList();
     final List<String> result = [];
     for (int i = 0; i < words.length; i++) {
       final String word = words[i];
@@ -110,115 +112,93 @@ class _ListaPageState extends State<ListaPage> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        return await showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: Text('Sei sicuro di voler uscire?'),
-                actions: <Widget>[
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(false),
-                    child: Text('No'),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(true),
-                    child: Text('Sì'),
-                  ),
-                ],
-              ),
-            ) ??
-            false;
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text('Gioca'),
-        ),
-        body: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: ListView.builder(
-                itemCount: items.length,
-                itemBuilder: (context, index) {
-                  return InkWell(
-                    onTap: () {
-                      // Ignora l'azione se l'elemento è disabilitato
-                      if (disableRow[index]) {
-                        return;
-                      }
-                      setState(() {
-                        selectedIndex = index;
-                        _textEditingController.text = '';
-                      });
-                    },
-                    child: Container(
-                      color: selectedIndex == index
-                          ? Colors.yellow
-                          : disableRow[index]
-                              ? Colors.green
-                              : Colors.white,
-                      child: ListTile(
-                        title: Text(
-                          items[index],
-                          style: TextStyle(
-                            backgroundColor: Colors.transparent,
-                          ),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Gioca'),
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: ListView.builder(
+              itemCount: items.length,
+              itemBuilder: (context, index) {
+                return InkWell(
+                  onTap: () {
+                    // Ignora l'azione se l'elemento è disabilitato
+                    if (disableRow[index]) {
+                      return;
+                    }
+                    setState(() {
+                      selectedIndex = index;
+                      _textEditingController.text = '';
+                    });
+                  },
+                  child: Container(
+                    color: selectedIndex == index
+                        ? Colors.yellow
+                        : disableRow[index]
+                            ? Colors.green
+                            : Colors.white,
+                    child: ListTile(
+                      title: Text(
+                        items[index],
+                        style: TextStyle(
+                          backgroundColor: Colors.transparent,
                         ),
                       ),
                     ),
-                  );
-                },
-              ),
+                  ),
+                );
+              },
             ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _textEditingController,
-                      onSubmitted: (value) {
-                        _checkWord(selectedIndex, replacement: value);
-                      },
-                      decoration: InputDecoration(
-                        hintText: selectedIndex != null
-                            ? '${items[selectedIndex!].length / 2} letters'
-                            : 'Modifica la parola',
-                        border: OutlineInputBorder(),
-                      ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _textEditingController,
+                    onSubmitted: (value) {
+                      _checkWord(selectedIndex, replacement: value);
+                    },
+                    decoration: InputDecoration(
+                      hintText: selectedIndex != null
+                          ? '${items[selectedIndex!].length / 2} letters'
+                          : 'Modifica la parola',
+                      border: OutlineInputBorder(),
                     ),
                   ),
-                  SizedBox(width: 8),
-                  IconButton(
-                    icon: Icon(Icons.send),
-                    onPressed: () {
-                      _checkWord(selectedIndex,
-                          replacement: _textEditingController.text);
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        bottomNavigationBar: BottomAppBar(
-          child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Punteggio: $score',
-                  style: TextStyle(fontSize: 18.0),
                 ),
-                Text(
-                  'Livello ${getCurrentLevel()}',
-                  style: TextStyle(fontSize: 18.0),
+                SizedBox(width: 8),
+                IconButton(
+                  icon: Icon(Icons.send),
+                  onPressed: () {
+                    _checkWord(selectedIndex,
+                        replacement: _textEditingController.text);
+                  },
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: BottomAppBar(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Punteggio: $score', // Mostra il punteggio
+                style: TextStyle(fontSize: 18.0),
+              ),
+              Text(
+                'Livello ${getCurrentLevel()}',
+                style: TextStyle(fontSize: 18.0),
+              ),
+            ],
           ),
         ),
       ),
@@ -304,7 +284,7 @@ class _ListaPageState extends State<ListaPage> {
 
   bool _checkWord(int? index, {String? replacement}) {
     if (index != null && index >= 0 && index < items.length) {
-      final List<String> words = arrayInformazioni.keys.toList();
+      final List<String> words = levelWords.keys.toList();
 
       final isWordInList = replacement != null &&
           words[index].toLowerCase() == replacement.toLowerCase();
@@ -312,8 +292,7 @@ class _ListaPageState extends State<ListaPage> {
       setState(() {
         if (isWordInList) {
           score += items[index].length;
-          // Converti la parola indovinata in maiuscolo
-          items[index] = replacement!.toUpperCase();
+          items[index] = replacement!;
           selectedIndex = getNextIndex(index);
           disableRow[index] = true;
           _showScorePopup(items[index].length);
@@ -350,5 +329,44 @@ class _ListaPageState extends State<ListaPage> {
     } else {
       return nextIndex;
     }
+  }
+}
+
+class DifficoltaPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Seleziona la Difficoltà'),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(
+                    context, '/lista'); // Naviga alla pagina di gioco
+              },
+              child: Text('Facile'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(
+                    context, '/lista'); // Naviga alla pagina di gioco
+              },
+              child: Text('Medio'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(
+                    context, '/lista'); // Naviga alla pagina di gioco
+              },
+              child: Text('Difficile'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
