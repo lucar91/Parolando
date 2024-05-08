@@ -1,6 +1,8 @@
 # Parolando
 
-A new Flutter project created with FlutLab - https://flutlab.io
+A pleasant pastime that allows you to discover new words.
+
+Challenge your friends and have fun guessing as many words as you can in as little time as possible.
 
 ## Getting Started
 
