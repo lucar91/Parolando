@@ -19,7 +19,7 @@ class JsonParser {
     }
   }
 
-  Map<String, dynamic>? getWords(String difficulty, int level) {
+  Map<String, dynamic>? getLevelItems(String difficulty, int level) {
     try {
       if (_data == null) {
         throw Exception("Data is not loaded yet.");

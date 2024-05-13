@@ -27,13 +27,12 @@ class _ListaPageState extends State<ListaPage> {
     JsonParser jsonParser = JsonParser();
     try {
       await jsonParser.loadJsonData(); // Carica i dati JSON
-      Map<String, dynamic>? words = jsonParser.getWords(
+      Map<String, dynamic>? words = jsonParser.getLevelItems(
           'easy', 1); // Ottieni le parole per il livello facile
       if (words != null) {
         levelWords = words['object'].keys.toList();
 
         disableRow = List<bool>.filled(levelWords!.length, false);
-        items = generateItems(); // Genera gli elementi in base ai dati del JSON
         setState(() {
           // Inizializza il resto del tuo stato
           items =
@@ -51,7 +50,8 @@ class _ListaPageState extends State<ListaPage> {
     final List<String> result = [];
     for (int i = 0; i < levelWords!.length; i++) {
       final String word = levelWords![i];
-      final String dashes = ''.padRight(word.length, '_ ');
+      final String dashes = word[0].padRight(word.length, '_');
+
       result.add('$dashes');
     }
     return result;
@@ -63,74 +63,101 @@ class _ListaPageState extends State<ListaPage> {
       appBar: AppBar(
         title: Text('Gioca'),
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            child: ListView.builder(
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                return InkWell(
-                  onTap: () {
-                    // Ignora l'azione se l'elemento è disabilitato
-                    if (disableRow[index]) {
-                      print("Forse qui");
-                      return;
-                    }
-                    setState(() {
-                      selectedIndex = index;
-                      _textEditingController.text = '';
-                    });
-                  },
-                  child: Container(
-                    color: selectedIndex == index
-                        ? Colors.yellow
-                        : disableRow[index]
-                            ? Colors.green
-                            : Colors.white,
-                    child: ListTile(
-                      title: Text(
-                        items[index],
-                        style: TextStyle(
-                          backgroundColor: Colors.transparent,
-                        ),
+      body: Container(
+        color: Colors.blue, // Imposta il colore di sfondo blu
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: ListView.builder(
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  final String item = items[index];
+                  return InkWell(
+                    onTap: () {
+                      // Ignora l'azione se l'elemento è disabilitato
+                      if (disableRow[index]) {
+                        print("Forse qui");
+                        return;
+                      }
+                      setState(() {
+                        selectedIndex = index;
+                        _textEditingController.text = '';
+                      });
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(
+                          8.0), // Spazio intorno al riquadro
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: item.split('').map((char) {
+                          if (char != ' ') {
+                            return Container(
+                              width:
+                                  50, // Imposta la larghezza del riquadro bianco
+                              height:
+                                  50, // Imposta l'altezza del riquadro bianco
+                              decoration: BoxDecoration(
+                                color: Colors
+                                    .white, // Imposta il colore di sfondo del riquadro bianco
+                                borderRadius: BorderRadius.circular(
+                                    8), // Arrotonda i bordi del riquadro
+                              ),
+                              alignment: Alignment
+                                  .center, // Centra il testo all'interno del riquadro
+                              child: Text(
+                                char,
+                                style: TextStyle(
+                                  fontSize:
+                                      24, // Imposta la dimensione del testo
+                                ),
+                              ),
+                            );
+                          } else {
+                            return SizedBox(
+                                width:
+                                    16); // Aggiunge uno spazio tra i riquadri bianchi
+                          }
+                        }).toList(),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _textEditingController,
+                      autofocus:
+                          true, // Imposta il focus sulla text area di default
+                      onSubmitted: (value) {
+                        _checkWord(selectedIndex, replacement: value);
+                      },
+                      decoration: InputDecoration(
+                        hintText: selectedIndex != null
+                            ? '${items[selectedIndex!].length} letters'
+                            : 'Modifica la parola',
+                        border: OutlineInputBorder(),
                       ),
                     ),
                   ),
-                );
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _textEditingController,
-                    onSubmitted: (value) {
-                      _checkWord(selectedIndex, replacement: value);
+                  SizedBox(width: 8),
+                  IconButton(
+                    icon: Icon(Icons.send),
+                    onPressed: () {
+                      _checkWord(selectedIndex,
+                          replacement: _textEditingController.text);
                     },
-                    decoration: InputDecoration(
-                      hintText: selectedIndex != null
-                          ? '${items[selectedIndex!].length / 2} letters'
-                          : 'Modifica la parola',
-                      border: OutlineInputBorder(),
-                    ),
                   ),
-                ),
-                SizedBox(width: 8),
-                IconButton(
-                  icon: Icon(Icons.send),
-                  onPressed: () {
-                    _checkWord(selectedIndex,
-                        replacement: _textEditingController.text);
-                  },
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       bottomNavigationBar: BottomAppBar(
         child: Padding(
@@ -240,7 +267,7 @@ class _ListaPageState extends State<ListaPage> {
       setState(() {
         if (isWordInList) {
           score += items[index].length;
-          items[index] = replacement!;
+          items[index] = replacement.toUpperCase();
           selectedIndex = getNextIndex(index);
           disableRow[index] = true;
           _showScorePopup(items[index].length);
