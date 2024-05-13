@@ -69,60 +69,76 @@ class _ListaPageState extends State<ListaPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Expanded(
-              child: ListView.builder(
-                itemCount: items.length,
-                itemBuilder: (context, index) {
-                  final String item = items[index];
-                  return InkWell(
-                    onTap: () {
-                      // Ignora l'azione se l'elemento è disabilitato
-                      if (disableRow[index]) {
-                        print("Forse qui");
-                        return;
-                      }
-                      setState(() {
-                        selectedIndex = index;
-                        _textEditingController.text = '';
-                      });
-                    },
-                    child: Padding(
+              child: SingleChildScrollView(
+                child: Wrap(
+                  alignment: WrapAlignment.center,
+                  children: items.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final item = entry.value;
+
+                    // Calcola la lunghezza massima della riga
+                    final maxLength = item.replaceAll(' ', '').length;
+
+                    return Padding(
                       padding: const EdgeInsets.all(
                           8.0), // Spazio intorno al riquadro
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: item.split('').map((char) {
-                          if (char != ' ') {
-                            return Container(
-                              width:
-                                  50, // Imposta la larghezza del riquadro bianco
-                              height:
-                                  50, // Imposta l'altezza del riquadro bianco
-                              decoration: BoxDecoration(
-                                color: Colors
-                                    .white, // Imposta il colore di sfondo del riquadro bianco
-                                borderRadius: BorderRadius.circular(
-                                    8), // Arrotonda i bordi del riquadro
-                              ),
-                              alignment: Alignment
-                                  .center, // Centra il testo all'interno del riquadro
-                              child: Text(
-                                char,
-                                style: TextStyle(
-                                  fontSize:
-                                      24, // Imposta la dimensione del testo
-                                ),
-                              ),
-                            );
-                          } else {
-                            return SizedBox(
-                                width:
-                                    16); // Aggiunge uno spazio tra i riquadri bianchi
+                      child: InkWell(
+                        onTap: () {
+                          // Ignora l'azione se l'elemento è disabilitato
+                          if (disableRow[index]) {
+                            print("Forse qui");
+                            return;
                           }
-                        }).toList(),
+                          setState(() {
+                            selectedIndex = index;
+                            _textEditingController.text = '';
+                          });
+                        },
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: item.split('').map((char) {
+                            if (char != ' ') {
+                              return SizedBox(
+                                width: 300 /
+                                    maxLength, // Adatta la larghezza in base alla lunghezza massima
+                                height:
+                                    50, // Imposta l'altezza fissa del riquadro bianco
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors
+                                        .white, // Imposta il colore di sfondo del riquadro bianco
+                                    borderRadius: BorderRadius.circular(
+                                        8), // Arrotonda i bordi del riquadro
+                                  ),
+                                  alignment: Alignment
+                                      .center, // Centra il testo all'interno del riquadro
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      char,
+                                      style: TextStyle(
+                                        fontSize:
+                                            24, // Imposta la dimensione del testo
+                                      ),
+                                      maxLines:
+                                          1, // Imposta il numero massimo di linee a 1
+                                      overflow: TextOverflow
+                                          .ellipsis, // Impedisce il testo di andare a capo
+                                    ),
+                                  ),
+                                ),
+                              );
+                            } else {
+                              return SizedBox(
+                                  width:
+                                      16); // Aggiunge uno spazio tra i riquadri bianchi
+                            }
+                          }).toList(),
+                        ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  }).toList(),
+                ),
               ),
             ),
             Padding(
@@ -142,6 +158,9 @@ class _ListaPageState extends State<ListaPage> {
                             ? '${items[selectedIndex!].length} letters'
                             : 'Modifica la parola',
                         border: OutlineInputBorder(),
+                        fillColor: Colors
+                            .white, // Imposta il colore di sfondo della text area
+                        filled: true, // Assicura che la text area sia riempita
                       ),
                     ),
                   ),
