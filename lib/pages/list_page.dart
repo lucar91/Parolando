@@ -95,6 +95,8 @@ class _ListaPageState extends State<ListaPage> {
                             children: items.asMap().entries.map((entry) {
                               final index = entry.key;
                               final item = entry.value;
+                              final isSelected = index ==
+                                  selectedIndex; // Check if this is the selected index
 
                               return Padding(
                                 padding: const EdgeInsets.all(
@@ -110,38 +112,45 @@ class _ListaPageState extends State<ListaPage> {
                                       _textEditingController.text = '';
                                     });
                                   },
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: item.split('').map((char) {
-                                      if (char != ' ') {
-                                        return Container(
-                                          width:
-                                              boxWidth, // Adatta la larghezza in base alla lunghezza massima
-                                          height:
-                                              50, // Imposta l'altezza fissa del riquadro bianco
-                                          margin: EdgeInsets.symmetric(
-                                              horizontal:
-                                                  4), // Aggiunge spazio tra le caselle della stessa riga
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                          ),
-                                          alignment: Alignment.center,
-                                          child: FittedBox(
-                                            fit: BoxFit.scaleDown,
-                                            child: Text(
-                                              char,
-                                              style: TextStyle(
-                                                fontSize: 24,
+                                  child: Container(
+                                    color: isSelected
+                                        ? Color(0xb94bd8ff)
+                                        : Colors
+                                            .transparent, // Imposta il colore di sfondo se selezionato
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: item.split('').map((char) {
+                                        if (char != ' ') {
+                                          return Container(
+                                            width:
+                                                boxWidth, // Adatta la larghezza in base alla lunghezza massima
+                                            height:
+                                                50, // Imposta l'altezza fissa del riquadro bianco
+                                            margin: EdgeInsets.symmetric(
+                                                horizontal:
+                                                    4), // Aggiunge spazio tra le caselle della stessa riga
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                            alignment: Alignment.center,
+                                            child: FittedBox(
+                                              fit: BoxFit.scaleDown,
+                                              child: Text(
+                                                char,
+                                                style: TextStyle(
+                                                  fontSize: 24,
+                                                ),
                                               ),
                                             ),
-                                          ),
-                                        );
-                                      } else {
-                                        return SizedBox(width: 16);
-                                      }
-                                    }).toList(),
+                                          );
+                                        } else {
+                                          return SizedBox(width: 16);
+                                        }
+                                      }).toList(),
+                                    ),
                                   ),
                                 ),
                               );
