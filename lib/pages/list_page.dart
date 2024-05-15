@@ -16,11 +16,13 @@ class _ListaPageState extends State<ListaPage> {
   List<String>? levelWords;
 
   int score = 0; // Aggiunta la variabile score
+  bool isLoading = true; // Aggiungi una variabile di stato per il caricamento
 
   @override
   void initState() {
     super.initState();
     loadJsonData(); // Carica i dati JSON all'avvio
+    selectedIndex = 0;
   }
 
   Future<void> loadJsonData() async {
@@ -34,15 +36,20 @@ class _ListaPageState extends State<ListaPage> {
 
         disableRow = List<bool>.filled(levelWords!.length, false);
         setState(() {
-          // Inizializza il resto del tuo stato
           items =
               generateItems(); // Genera gli elementi in base ai dati del JSON
+          isLoading =
+              false; // Imposta isLoading su false dopo il caricamento dei dati
         });
       } else {
         throw Exception("Failed to get words for the level.");
       }
     } catch (e) {
       print("Error loading JSON data: $e");
+      setState(() {
+        isLoading =
+            false; // Anche in caso di errore, impostiamo isLoading su false
+      });
     }
   }
 
@@ -59,124 +66,123 @@ class _ListaPageState extends State<ListaPage> {
 
   @override
   Widget build(BuildContext context) {
+    final maxWordLength = levelWords
+            ?.map((word) => word.length)
+            .reduce((a, b) => a > b ? a : b) ??
+        1;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final boxWidth =
+        (screenWidth - 32 - (maxWordLength - 1) * 8) / maxWordLength;
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Gioca'),
       ),
       body: Container(
         color: Colors.blue, // Imposta il colore di sfondo blu
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                child: Wrap(
-                  alignment: WrapAlignment.center,
-                  children: items.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final item = entry.value;
+        child:
+            isLoading // Mostra una schermata di caricamento se isLoading è true
+                ? Center(
+                    child: CircularProgressIndicator(),
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Wrap(
+                            alignment: WrapAlignment.center,
+                            children: items.asMap().entries.map((entry) {
+                              final index = entry.key;
+                              final item = entry.value;
 
-                    // Calcola la lunghezza massima della riga
-                    final maxLength = item.replaceAll(' ', '').length;
-
-                    return Padding(
-                      padding: const EdgeInsets.all(
-                          8.0), // Spazio intorno al riquadro
-                      child: InkWell(
-                        onTap: () {
-                          // Ignora l'azione se l'elemento è disabilitato
-                          if (disableRow[index]) {
-                            print("Forse qui");
-                            return;
-                          }
-                          setState(() {
-                            selectedIndex = index;
-                            _textEditingController.text = '';
-                          });
-                        },
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: item.split('').map((char) {
-                            if (char != ' ') {
-                              return SizedBox(
-                                width: 300 /
-                                    maxLength, // Adatta la larghezza in base alla lunghezza massima
-                                height:
-                                    50, // Imposta l'altezza fissa del riquadro bianco
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors
-                                        .white, // Imposta il colore di sfondo del riquadro bianco
-                                    borderRadius: BorderRadius.circular(
-                                        8), // Arrotonda i bordi del riquadro
-                                  ),
-                                  alignment: Alignment
-                                      .center, // Centra il testo all'interno del riquadro
-                                  child: FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    child: Text(
-                                      char,
-                                      style: TextStyle(
-                                        fontSize:
-                                            24, // Imposta la dimensione del testo
-                                      ),
-                                      maxLines:
-                                          1, // Imposta il numero massimo di linee a 1
-                                      overflow: TextOverflow
-                                          .ellipsis, // Impedisce il testo di andare a capo
-                                    ),
+                              return Padding(
+                                padding: const EdgeInsets.all(
+                                    8.0), // Spazio intorno al riquadro
+                                child: InkWell(
+                                  onTap: () {
+                                    // Ignora l'azione se l'elemento è disabilitato
+                                    if (disableRow[index]) {
+                                      return;
+                                    }
+                                    setState(() {
+                                      selectedIndex = index;
+                                      _textEditingController.text = '';
+                                    });
+                                  },
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: item.split('').map((char) {
+                                      if (char != ' ') {
+                                        return Container(
+                                          width:
+                                              boxWidth, // Adatta la larghezza in base alla lunghezza massima
+                                          height:
+                                              50, // Imposta l'altezza fissa del riquadro bianco
+                                          margin: EdgeInsets.symmetric(
+                                              horizontal:
+                                                  4), // Aggiunge spazio tra le caselle della stessa riga
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          alignment: Alignment.center,
+                                          child: FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            child: Text(
+                                              char,
+                                              style: TextStyle(
+                                                fontSize: 24,
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      } else {
+                                        return SizedBox(width: 16);
+                                      }
+                                    }).toList(),
                                   ),
                                 ),
                               );
-                            } else {
-                              return SizedBox(
-                                  width:
-                                      16); // Aggiunge uno spazio tra i riquadri bianchi
-                            }
-                          }).toList(),
+                            }).toList(),
+                          ),
                         ),
                       ),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _textEditingController,
-                      autofocus:
-                          true, // Imposta il focus sulla text area di default
-                      onSubmitted: (value) {
-                        _checkWord(selectedIndex, replacement: value);
-                      },
-                      decoration: InputDecoration(
-                        hintText: selectedIndex != null
-                            ? '${items[selectedIndex!].length} letters'
-                            : 'Modifica la parola',
-                        border: OutlineInputBorder(),
-                        fillColor: Colors
-                            .white, // Imposta il colore di sfondo della text area
-                        filled: true, // Assicura che la text area sia riempita
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _textEditingController,
+                                autofocus: true,
+                                onSubmitted: (value) {
+                                  _checkWord(selectedIndex, replacement: value);
+                                },
+                                decoration: InputDecoration(
+                                  hintText: selectedIndex != null
+                                      ? '${items[selectedIndex!].length} letters'
+                                      : 'Modifica la parola',
+                                  border: OutlineInputBorder(),
+                                  fillColor: Colors.white,
+                                  filled: true,
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            IconButton(
+                              icon: Icon(Icons.send),
+                              onPressed: () {
+                                _checkWord(selectedIndex,
+                                    replacement: _textEditingController.text);
+                              },
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                  SizedBox(width: 8),
-                  IconButton(
-                    icon: Icon(Icons.send),
-                    onPressed: () {
-                      _checkWord(selectedIndex,
-                          replacement: _textEditingController.text);
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
       bottomNavigationBar: BottomAppBar(
         child: Padding(
@@ -282,7 +288,6 @@ class _ListaPageState extends State<ListaPage> {
 
       final isWordInList = replacement != null &&
           words[index].toLowerCase() == replacement.toLowerCase();
-      print('Ecco $replacement e ${words[index]} e $selectedIndex');
       setState(() {
         if (isWordInList) {
           score += items[index].length;
@@ -297,14 +302,13 @@ class _ListaPageState extends State<ListaPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Riprova'),
-              duration: Duration(seconds: 1), // Durata del popup: 1 secondo
+              duration: Duration(seconds: 1),
             ),
           );
           selectedIndex = index;
         }
       });
 
-      // Pulisce la text area e chiude il popup dopo un certo intervallo di tempo
       Timer(Duration(seconds: 2), () {
         setState(() {
           _textEditingController.clear();
