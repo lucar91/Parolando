@@ -17,12 +17,37 @@ class _ListaPageState extends State<ListaPage> {
 
   int score = 0; // Aggiunta la variabile score
   bool isLoading = true; // Aggiungi una variabile di stato per il caricamento
+  final String difficultyLevel = 'Difficoltà livello'; // Livello di difficoltà
+
+  int _timeRemaining =
+      300; // Tempo rimanente in secondi (es. 300 secondi = 5 minuti)
+  late Timer _timer;
 
   @override
   void initState() {
     super.initState();
     loadJsonData(); // Carica i dati JSON all'avvio
     selectedIndex = 0;
+    startTimer(); // Avvia il timer all'inizio
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel(); // Ferma il timer quando il widget viene smontato
+    super.dispose();
+  }
+
+  void startTimer() {
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {
+        if (_timeRemaining > 0) {
+          _timeRemaining--;
+        } else {
+          _timer.cancel();
+          _showPopup('Tempo scaduto!');
+        }
+      });
+    });
   }
 
   Future<void> loadJsonData() async {
@@ -64,6 +89,12 @@ class _ListaPageState extends State<ListaPage> {
     return result;
   }
 
+  String getFormattedTime(int seconds) {
+    final minutes = (seconds ~/ 60).toString().padLeft(2, '0');
+    final remainingSeconds = (seconds % 60).toString().padLeft(2, '0');
+    return '$minutes:$remainingSeconds';
+  }
+
   @override
   Widget build(BuildContext context) {
     final maxWordLength = levelWords
@@ -76,7 +107,7 @@ class _ListaPageState extends State<ListaPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Gioca'),
+        title: Text('$difficultyLevel - Livello 1'),
       ),
       body: Container(
         color: Colors.blue, // Imposta il colore di sfondo blu
@@ -204,7 +235,7 @@ class _ListaPageState extends State<ListaPage> {
                 style: TextStyle(fontSize: 18.0),
               ),
               Text(
-                'Livello ${getCurrentLevel()}',
+                getFormattedTime(_timeRemaining), // Mostra il timer
                 style: TextStyle(fontSize: 18.0),
               ),
             ],
@@ -250,11 +281,6 @@ class _ListaPageState extends State<ListaPage> {
         );
       },
     );
-  }
-
-  int getCurrentLevel() {
-    // Implementa la logica per ottenere il numero del livello corrente
-    return 1;
   }
 
   void _showScorePopup(int points) {
