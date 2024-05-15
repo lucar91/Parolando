@@ -95,6 +95,27 @@ class _ListaPageState extends State<ListaPage> {
     return '$minutes:$remainingSeconds';
   }
 
+  Future<bool> _onWillPop() async {
+    return (await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('Sei sicuro di voler uscire?'),
+            content: Text('La partita non verrà salvata.'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text('Gioca'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text('Esci'),
+              ),
+            ],
+          ),
+        )) ??
+        false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final maxWordLength = levelWords
@@ -105,140 +126,145 @@ class _ListaPageState extends State<ListaPage> {
     final boxWidth =
         (screenWidth - 32 - (maxWordLength - 1) * 8) / maxWordLength;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('$difficultyLevel - Livello 1'),
-      ),
-      body: Container(
-        color: Colors.blue, // Imposta il colore di sfondo blu
-        child:
-            isLoading // Mostra una schermata di caricamento se isLoading è true
-                ? Center(
-                    child: CircularProgressIndicator(),
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(
-                        child: SingleChildScrollView(
-                          child: Wrap(
-                            alignment: WrapAlignment.center,
-                            children: items.asMap().entries.map((entry) {
-                              final index = entry.key;
-                              final item = entry.value;
-                              final isSelected = index ==
-                                  selectedIndex; // Check if this is the selected index
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('$difficultyLevel - Livello 1'),
+        ),
+        body: Container(
+          color: Colors.blue, // Imposta il colore di sfondo blu
+          child:
+              isLoading // Mostra una schermata di caricamento se isLoading è true
+                  ? Center(
+                      child: CircularProgressIndicator(),
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: SingleChildScrollView(
+                            child: Wrap(
+                              alignment: WrapAlignment.center,
+                              children: items.asMap().entries.map((entry) {
+                                final index = entry.key;
+                                final item = entry.value;
+                                final isSelected = index ==
+                                    selectedIndex; // Check if this is the selected index
 
-                              return Padding(
-                                padding: const EdgeInsets.all(
-                                    8.0), // Spazio intorno al riquadro
-                                child: InkWell(
-                                  onTap: () {
-                                    // Ignora l'azione se l'elemento è disabilitato
-                                    if (disableRow[index]) {
-                                      return;
-                                    }
-                                    setState(() {
-                                      selectedIndex = index;
-                                      _textEditingController.text = '';
-                                    });
-                                  },
-                                  child: Container(
-                                    color: isSelected
-                                        ? Color(0xb94bd8ff)
-                                        : Colors
-                                            .transparent, // Imposta il colore di sfondo se selezionato
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: item.split('').map((char) {
-                                        if (char != ' ') {
-                                          return Container(
-                                            width:
-                                                boxWidth, // Adatta la larghezza in base alla lunghezza massima
-                                            height:
-                                                50, // Imposta l'altezza fissa del riquadro bianco
-                                            margin: EdgeInsets.symmetric(
-                                                horizontal:
-                                                    4), // Aggiunge spazio tra le caselle della stessa riga
-                                            decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                            alignment: Alignment.center,
-                                            child: FittedBox(
-                                              fit: BoxFit.scaleDown,
-                                              child: Text(
-                                                char,
-                                                style: TextStyle(
-                                                  fontSize: 24,
+                                return Padding(
+                                  padding: const EdgeInsets.all(
+                                      8.0), // Spazio intorno al riquadro
+                                  child: InkWell(
+                                    onTap: () {
+                                      // Ignora l'azione se l'elemento è disabilitato
+                                      if (disableRow[index]) {
+                                        return;
+                                      }
+                                      setState(() {
+                                        selectedIndex = index;
+                                        _textEditingController.text = '';
+                                      });
+                                    },
+                                    child: Container(
+                                      color: isSelected
+                                          ? Color(0xb94bd8ff)
+                                          : Colors
+                                              .transparent, // Imposta il colore di sfondo se selezionato
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: item.split('').map((char) {
+                                          if (char != ' ') {
+                                            return Container(
+                                              width:
+                                                  boxWidth, // Adatta la larghezza in base alla lunghezza massima
+                                              height:
+                                                  50, // Imposta l'altezza fissa del riquadro bianco
+                                              margin: EdgeInsets.symmetric(
+                                                  horizontal:
+                                                      4), // Aggiunge spazio tra le caselle della stessa riga
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              alignment: Alignment.center,
+                                              child: FittedBox(
+                                                fit: BoxFit.scaleDown,
+                                                child: Text(
+                                                  char,
+                                                  style: TextStyle(
+                                                    fontSize: 24,
+                                                  ),
                                                 ),
                                               ),
-                                            ),
-                                          );
-                                        } else {
-                                          return SizedBox(width: 16);
-                                        }
-                                      }).toList(),
+                                            );
+                                          } else {
+                                            return SizedBox(width: 16);
+                                          }
+                                        }).toList(),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              );
-                            }).toList(),
+                                );
+                              }).toList(),
+                            ),
                           ),
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: _textEditingController,
-                                autofocus: true,
-                                onSubmitted: (value) {
-                                  _checkWord(selectedIndex, replacement: value);
-                                },
-                                decoration: InputDecoration(
-                                  hintText: selectedIndex != null
-                                      ? '${items[selectedIndex!].length} letters'
-                                      : 'Modifica la parola',
-                                  border: OutlineInputBorder(),
-                                  fillColor: Colors.white,
-                                  filled: true,
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: _textEditingController,
+                                  autofocus: true,
+                                  onSubmitted: (value) {
+                                    _checkWord(selectedIndex,
+                                        replacement: value);
+                                  },
+                                  decoration: InputDecoration(
+                                    hintText: selectedIndex != null
+                                        ? '${items[selectedIndex!].length} letters'
+                                        : 'Modifica la parola',
+                                    border: OutlineInputBorder(),
+                                    fillColor: Colors.white,
+                                    filled: true,
+                                  ),
                                 ),
                               ),
-                            ),
-                            SizedBox(width: 8),
-                            IconButton(
-                              icon: Icon(Icons.send),
-                              onPressed: () {
-                                _checkWord(selectedIndex,
-                                    replacement: _textEditingController.text);
-                              },
-                            ),
-                          ],
+                              SizedBox(width: 8),
+                              IconButton(
+                                icon: Icon(Icons.send),
+                                onPressed: () {
+                                  _checkWord(selectedIndex,
+                                      replacement: _textEditingController.text);
+                                },
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-      ),
-      bottomNavigationBar: BottomAppBar(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Punteggio: $score', // Mostra il punteggio
-                style: TextStyle(fontSize: 18.0),
-              ),
-              Text(
-                getFormattedTime(_timeRemaining), // Mostra il timer
-                style: TextStyle(fontSize: 18.0),
-              ),
-            ],
+                      ],
+                    ),
+        ),
+        bottomNavigationBar: BottomAppBar(
+          child: Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Punteggio: $score', // Mostra il punteggio
+                  style: TextStyle(fontSize: 18.0),
+                ),
+                Text(
+                  getFormattedTime(_timeRemaining), // Mostra il timer
+                  style: TextStyle(fontSize: 18.0),
+                ),
+              ],
+            ),
           ),
         ),
       ),
