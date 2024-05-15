@@ -17,15 +17,19 @@ class _ListaPageState extends State<ListaPage> {
 
   int score = 0; // Aggiunta la variabile score
   bool isLoading = true; // Aggiungi una variabile di stato per il caricamento
-  final String difficultyLevel = 'Difficoltà livello'; // Livello di difficoltà
+  final String difficultyLevel = 'Difficoltà'; // Livello di difficoltà
 
   int _timeRemaining =
       300; // Tempo rimanente in secondi (es. 300 secondi = 5 minuti)
   late Timer _timer;
+  late FocusNode _textFocusNode;
 
   @override
   void initState() {
     super.initState();
+    _textFocusNode = FocusNode();
+    // Richiedi il focus sulla text area all'avvio del widget
+    _updateFocus();
     loadJsonData(); // Carica i dati JSON all'avvio
     selectedIndex = 0;
     startTimer(); // Avvia il timer all'inizio
@@ -34,6 +38,7 @@ class _ListaPageState extends State<ListaPage> {
   @override
   void dispose() {
     _timer.cancel(); // Ferma il timer quando il widget viene smontato
+    _textFocusNode.dispose();
     super.dispose();
   }
 
@@ -116,6 +121,23 @@ class _ListaPageState extends State<ListaPage> {
         false;
   }
 
+  void _updateFocus() {
+    // Se c'è almeno una riga selezionata, richiedi il focus sulla text area
+    if (selectedIndex != null) {
+      _textFocusNode.requestFocus();
+    } else {
+      // Altrimenti, rimuovi il focus dalla text area
+      _textFocusNode.unfocus();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant ListaPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Aggiorna il focus quando cambia lo stato delle righe selezionate
+    _updateFocus();
+  }
+
   @override
   Widget build(BuildContext context) {
     final maxWordLength = levelWords
@@ -163,6 +185,7 @@ class _ListaPageState extends State<ListaPage> {
                                       }
                                       setState(() {
                                         selectedIndex = index;
+                                        _updateFocus();
                                         _textEditingController.text = '';
                                       });
                                     },
@@ -219,6 +242,8 @@ class _ListaPageState extends State<ListaPage> {
                               Expanded(
                                 child: TextField(
                                   controller: _textEditingController,
+                                  focusNode:
+                                      _textFocusNode, // Collega il FocusNode alla TextField
                                   autofocus: true,
                                   onSubmitted: (value) {
                                     _checkWord(selectedIndex,
@@ -382,11 +407,13 @@ class _ListaPageState extends State<ListaPage> {
   }
 
   int getNextIndex(int currentIndex) {
-    final nextIndex = currentIndex + 1;
-    if (nextIndex >= items.length) {
-      return 0;
-    } else {
-      return nextIndex;
+    int nextIndex = currentIndex + 1;
+
+    // Continua a cercare la prossima riga abilitata
+    while (disableRow[nextIndex % items.length]) {
+      nextIndex++;
     }
+
+    return nextIndex % items.length;
   }
 }
