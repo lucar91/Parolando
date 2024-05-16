@@ -62,7 +62,7 @@ class _ListaPageState extends State<ListaPage> {
       Map<String, dynamic>? words = jsonParser.getLevelItems(
           'easy', 1); // Ottieni le parole per il livello facile
       if (words != null) {
-        levelWords = words['object'].keys.toList();
+        levelWords = words['words'].keys.toList();
 
         disableRow = List<bool>.filled(levelWords!.length, false);
         setState(() {
