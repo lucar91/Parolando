@@ -14,6 +14,7 @@ class _ListaPageState extends State<ListaPage> {
   TextEditingController _textEditingController = TextEditingController();
 
   List<String>? levelWords;
+  List<String>? levelWordsLetters;
 
   int score = 0; // Aggiunta la variabile score
   bool isLoading = true; // Aggiungi una variabile di stato per il caricamento
@@ -59,11 +60,13 @@ class _ListaPageState extends State<ListaPage> {
     JsonParser jsonParser = JsonParser();
     try {
       await jsonParser.loadJsonData(); // Carica i dati JSON
-      Map<String, dynamic>? words = jsonParser.getLevelItems(
+      Map<String, dynamic>? wordsPack = jsonParser.getLevelItems(
           'easy', 1); // Ottieni le parole per il livello facile
-      if (words != null) {
-        levelWords = words['words'].keys.toList();
-
+      if (wordsPack != null) {
+        Map<String, dynamic> wordsMap = wordsPack['words'];
+        levelWords = wordsMap.keys.toList(); // Lista delle chiavi
+        levelWordsLetters =
+            wordsMap.values.map((value) => value.toString()).toList();
         disableRow = List<bool>.filled(levelWords!.length, false);
         setState(() {
           items =
@@ -164,6 +167,18 @@ class _ListaPageState extends State<ListaPage> {
                   : Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        if (selectedIndex != null)
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              'Lettere: ${levelWordsLetters![selectedIndex!]}',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
                         Expanded(
                           child: SingleChildScrollView(
                             child: Wrap(
