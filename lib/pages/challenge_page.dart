@@ -1,19 +1,11 @@
 import 'package:flutter/material.dart';
 
-class HomePage extends StatelessWidget {
+class ChallengePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Home'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.login),
-            onPressed: () {
-              // Implementa la logica per il login
-            },
-          ),
-        ],
+        title: Text('Sfida'),
       ),
       body: Center(
         child: Column(
@@ -21,16 +13,15 @@ class HomePage extends StatelessWidget {
           children: [
             ElevatedButton(
               onPressed: () {
-                Navigator.pushNamed(context, '/difficulty');
+                Navigator.pushNamed(context, '/new_game');
               },
-              child: Text('Allenamento'),
+              child: Text('Nuova Partita'),
             ),
-            SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                Navigator.pushNamed(context, '/challenge');
+                // Implementa la logica per "Partita Esistente"
               },
-              child: Text('Sfida'),
+              child: Text('Partita Esistente'),
             ),
           ],
         ),
