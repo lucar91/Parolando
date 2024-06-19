@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:parolando/utils/json_parser.dart'; // Assicurati di importare il file json_parser.dart
-import 'dart:async';
+import 'timer_manager.dart';
+import 'dart:math';
 
-class ListaPage extends StatefulWidget {
+class GamePage extends StatefulWidget {
   @override
-  _ListaPageState createState() => _ListaPageState();
+  _GamePageState createState() => _GamePageState();
 }
 
-class _ListaPageState extends State<ListaPage> {
+class _GamePageState extends State<GamePage> {
   late List<String> items = [];
   late List<bool> disableRow = [];
   int? selectedIndex;
-  TextEditingController _textEditingController = TextEditingController();
 
   List<String>? levelWords;
   List<String>? levelWordsLetters;
@@ -20,10 +20,12 @@ class _ListaPageState extends State<ListaPage> {
   bool isLoading = true; // Aggiungi una variabile di stato per il caricamento
   final String difficultyLevel = 'Difficoltà'; // Livello di difficoltà
 
-  int _timeRemaining =
-      300; // Tempo rimanente in secondi (es. 300 secondi = 5 minuti)
-  late Timer _timer;
+  late TimerManager _timerManager;
   late FocusNode _textFocusNode;
+
+  List<String> availableLetters = [];
+  List<String> usedLetters = [];
+  Map<int, String> initialWords = {};
 
   @override
   void initState() {
@@ -33,27 +35,27 @@ class _ListaPageState extends State<ListaPage> {
     _updateFocus();
     loadJsonData(); // Carica i dati JSON all'avvio
     selectedIndex = 0;
-    startTimer(); // Avvia il timer all'inizio
+    _timerManager = TimerManager(300,
+        onTimerUpdate: _onTimerUpdate, onTimeExpired: _onTimeExpired);
+    _timerManager.startTimer();
   }
 
   @override
   void dispose() {
-    _timer.cancel(); // Ferma il timer quando il widget viene smontato
+    _timerManager
+        .cancelTimer(); // Ferma il timer quando il widget viene smontato
     _textFocusNode.dispose();
     super.dispose();
   }
 
-  void startTimer() {
-    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
-      setState(() {
-        if (_timeRemaining > 0) {
-          _timeRemaining--;
-        } else {
-          _timer.cancel();
-          _showPopup('Tempo scaduto!');
-        }
-      });
+  void _onTimerUpdate(int timeRemaining) {
+    setState(() {
+      // Questo viene chiamato ogni secondo per aggiornare il timer
     });
+  }
+
+  void _onTimeExpired() {
+    _showPopup('Tempo scaduto!');
   }
 
   Future<void> loadJsonData() async {
@@ -74,6 +76,7 @@ class _ListaPageState extends State<ListaPage> {
           isLoading =
               false; // Imposta isLoading su false dopo il caricamento dei dati
         });
+        updateAvailableLetters();
       } else {
         throw Exception("Failed to get words for the level.");
       }
@@ -86,21 +89,25 @@ class _ListaPageState extends State<ListaPage> {
     }
   }
 
+  void updateAvailableLetters() {
+    if (selectedIndex != null && levelWords != null) {
+      String word = levelWords![selectedIndex!];
+      availableLetters = word.split('');
+      print(availableLetters);
+      availableLetters.removeAt(0);
+      availableLetters.shuffle(Random());
+    }
+  }
+
   List<String> generateItems() {
     final List<String> result = [];
     for (int i = 0; i < levelWords!.length; i++) {
       final String word = levelWords![i];
       final String dashes = word[0].padRight(word.length, '_');
-
+      initialWords[i] = dashes;
       result.add('$dashes');
     }
     return result;
-  }
-
-  String getFormattedTime(int seconds) {
-    final minutes = (seconds ~/ 60).toString().padLeft(2, '0');
-    final remainingSeconds = (seconds % 60).toString().padLeft(2, '0');
-    return '$minutes:$remainingSeconds';
   }
 
   Future<bool> _onWillPop() async {
@@ -135,7 +142,7 @@ class _ListaPageState extends State<ListaPage> {
   }
 
   @override
-  void didUpdateWidget(covariant ListaPage oldWidget) {
+  void didUpdateWidget(covariant GamePage oldWidget) {
     super.didUpdateWidget(oldWidget);
     // Aggiorna il focus quando cambia lo stato delle righe selezionate
     _updateFocus();
@@ -167,18 +174,6 @@ class _ListaPageState extends State<ListaPage> {
                   : Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        if (selectedIndex != null)
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              'Lettere: ${levelWordsLetters![selectedIndex!]}',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
                         Expanded(
                           child: SingleChildScrollView(
                             child: Wrap(
@@ -201,7 +196,7 @@ class _ListaPageState extends State<ListaPage> {
                                       setState(() {
                                         selectedIndex = index;
                                         _updateFocus();
-                                        _textEditingController.text = '';
+                                        updateAvailableLetters();
                                       });
                                     },
                                     child: Container(
@@ -250,39 +245,40 @@ class _ListaPageState extends State<ListaPage> {
                             ),
                           ),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  controller: _textEditingController,
-                                  focusNode:
-                                      _textFocusNode, // Collega il FocusNode alla TextField
-                                  autofocus: true,
-                                  onSubmitted: (value) {
-                                    _checkWord(selectedIndex,
-                                        replacement: value);
-                                  },
-                                  decoration: InputDecoration(
-                                    hintText: selectedIndex != null
-                                        ? '${items[selectedIndex!].length} letters'
-                                        : 'Modifica la parola',
-                                    border: OutlineInputBorder(),
-                                    fillColor: Colors.white,
-                                    filled: true,
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          children: availableLetters.map((letter) {
+                            return Padding(
+                              padding: const EdgeInsets.all(4.0),
+                              child: InkWell(
+                                onTap: () {
+                                  _onLetterTap(letter);
+                                },
+                                child: Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    letter,
+                                    style: TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                               ),
-                              SizedBox(width: 8),
-                              IconButton(
-                                icon: Icon(Icons.send),
-                                onPressed: () {
-                                  _checkWord(selectedIndex,
-                                      replacement: _textEditingController.text);
-                                },
-                              ),
-                            ],
+                            );
+                          }).toList(),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: ElevatedButton(
+                            onPressed: _resetSelectedWord,
+                            child: Text('Clean'),
                           ),
                         ),
                       ],
@@ -300,7 +296,7 @@ class _ListaPageState extends State<ListaPage> {
                   style: TextStyle(fontSize: 18.0),
                 ),
                 Text(
-                  getFormattedTime(_timeRemaining), // Mostra il timer
+                  _timerManager.getFormattedTime(), // Mostra il timer
                   style: TextStyle(fontSize: 18.0),
                 ),
               ],
@@ -351,8 +347,6 @@ class _ListaPageState extends State<ListaPage> {
 
   void _showScorePopup(int points) {
     // Pulisce la text area prima di mostrare il popup del punteggio
-    _textEditingController.clear();
-
     OverlayEntry overlayEntry;
     overlayEntry = OverlayEntry(
       builder: (context) => Positioned(
@@ -383,6 +377,23 @@ class _ListaPageState extends State<ListaPage> {
     });
   }
 
+  void _onLetterTap(String letter) {
+    if (selectedIndex == null) return;
+    setState(() {
+      usedLetters.add(letter);
+      availableLetters.remove(letter);
+      String currentItem = items[selectedIndex!];
+      int firstUnderscore = currentItem.indexOf('_');
+      if (firstUnderscore != -1) {
+        currentItem = currentItem.replaceFirst('_', letter);
+        items[selectedIndex!] = currentItem;
+      }
+      if (!currentItem.contains('_')) {
+        _checkWord(selectedIndex, replacement: currentItem);
+      }
+    });
+  }
+
   bool _checkWord(int? index, {String? replacement}) {
     if (index != null && index >= 0 && index < items.length) {
       final List<String> words = levelWords!;
@@ -399,6 +410,7 @@ class _ListaPageState extends State<ListaPage> {
           if (disableRow.every((element) => element)) {
             _showPopup('Completato');
           }
+          updateAvailableLetters();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -406,19 +418,24 @@ class _ListaPageState extends State<ListaPage> {
               duration: Duration(seconds: 1),
             ),
           );
-          selectedIndex = index;
+          _resetSelectedWord();
         }
-      });
-
-      Timer(Duration(seconds: 2), () {
-        setState(() {
-          _textEditingController.clear();
-        });
       });
 
       return isWordInList;
     }
     return false;
+  }
+
+  void _resetSelectedWord() {
+    if (selectedIndex == null) return;
+    setState(() {
+      items[selectedIndex!] = initialWords[selectedIndex!]!;
+      availableLetters.addAll(usedLetters);
+      usedLetters.clear();
+      availableLetters.shuffle(Random());
+      updateAvailableLetters();
+    });
   }
 
   int getNextIndex(int currentIndex) {
