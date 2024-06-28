@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:parolando/utils/json_parser.dart'; // Assicurati di importare il file json_parser.dart
+import 'package:firebase_database/firebase_database.dart';
 import 'timer_manager.dart';
 import 'dart:math';
 
@@ -16,9 +16,9 @@ class _GamePageState extends State<GamePage> {
   List<String>? levelWords;
   List<String>? levelWordsLetters;
 
-  int score = 0; // Aggiunta la variabile score
-  bool isLoading = true; // Aggiungi una variabile di stato per il caricamento
-  final String difficultyLevel = 'Difficoltà'; // Livello di difficoltà
+  int score = 0; // Added score variable
+  bool isLoading = true; // Loading state variable
+  final String difficultyLevel = 'Difficoltà'; // Difficulty level
 
   late TimerManager _timerManager;
   late FocusNode _textFocusNode;
@@ -27,13 +27,15 @@ class _GamePageState extends State<GamePage> {
   List<String> usedLetters = [];
   Map<int, String> initialWords = {};
 
+  final DatabaseReference _databaseReference = FirebaseDatabase.instance.ref();
+  String gameId = "gameId1"; // Game ID, can be dynamic based on your needs.
+
   @override
   void initState() {
     super.initState();
     _textFocusNode = FocusNode();
-    // Richiedi il focus sulla text area all'avvio del widget
     _updateFocus();
-    loadJsonData(); // Carica i dati JSON all'avvio
+    loadGameData(); // Load game data from Firebase
     selectedIndex = 0;
     _timerManager = TimerManager(300,
         onTimerUpdate: _onTimerUpdate, onTimeExpired: _onTimeExpired);
@@ -42,15 +44,14 @@ class _GamePageState extends State<GamePage> {
 
   @override
   void dispose() {
-    _timerManager
-        .cancelTimer(); // Ferma il timer quando il widget viene smontato
+    _timerManager.cancelTimer();
     _textFocusNode.dispose();
     super.dispose();
   }
 
   void _onTimerUpdate(int timeRemaining) {
     setState(() {
-      // Questo viene chiamato ogni secondo per aggiornare il timer
+      // Update the timer
     });
   }
 
@@ -58,33 +59,37 @@ class _GamePageState extends State<GamePage> {
     _showPopup('Tempo scaduto!');
   }
 
-  Future<void> loadJsonData() async {
-    JsonParser jsonParser = JsonParser();
+  Future<void> loadGameData() async {
     try {
-      await jsonParser.loadJsonData(); // Carica i dati JSON
-      Map<String, dynamic>? wordsPack = jsonParser.getLevelItems(
-          'easy', 1); // Ottieni le parole per il livello facile
-      if (wordsPack != null) {
-        Map<String, dynamic> wordsMap = wordsPack['words'];
-        levelWords = wordsMap.keys.toList(); // Lista delle chiavi
-        levelWordsLetters =
-            wordsMap.values.map((value) => value.toString()).toList();
-        disableRow = List<bool>.filled(levelWords!.length, false);
+      print('Reading data from Firebase...');
+      DatabaseEvent event =
+          await _databaseReference.child('games/$gameId').once();
+      DataSnapshot snapshot = event.snapshot;
+
+      if (snapshot.exists) {
+        Map<String, dynamic> data = snapshot.value as Map<String, dynamic>;
+        print("Game data: $data");
+
+        List<String> words = List<String>.from(data['currentWords']);
+        List<String> wordsLetters =
+            words.map((value) => value.toString()).toList();
+        List<bool> disableRow = List<bool>.filled(words.length, false);
+
         setState(() {
-          items =
-              generateItems(); // Genera gli elementi in base ai dati del JSON
-          isLoading =
-              false; // Imposta isLoading su false dopo il caricamento dei dati
+          levelWords = words;
+          levelWordsLetters = wordsLetters;
+          this.disableRow = disableRow;
+          items = generateItems();
+          isLoading = false;
         });
         updateAvailableLetters();
       } else {
-        throw Exception("Failed to get words for the level.");
+        throw Exception("Game document does not exist.");
       }
     } catch (e) {
-      print("Error loading JSON data: $e");
+      print("Error loading game data: $e");
       setState(() {
-        isLoading =
-            false; // Anche in caso di errore, impostiamo isLoading su false
+        isLoading = false;
       });
     }
   }
@@ -132,11 +137,9 @@ class _GamePageState extends State<GamePage> {
   }
 
   void _updateFocus() {
-    // Se c'è almeno una riga selezionata, richiedi il focus sulla text area
     if (selectedIndex != null) {
       _textFocusNode.requestFocus();
     } else {
-      // Altrimenti, rimuovi il focus dalla text area
       _textFocusNode.unfocus();
     }
   }
@@ -144,7 +147,6 @@ class _GamePageState extends State<GamePage> {
   @override
   void didUpdateWidget(covariant GamePage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Aggiorna il focus quando cambia lo stato delle righe selezionate
     _updateFocus();
   }
 
@@ -165,124 +167,107 @@ class _GamePageState extends State<GamePage> {
           title: Text('$difficultyLevel - Livello 1'),
         ),
         body: Container(
-          color: Colors.blue, // Imposta il colore di sfondo blu
-          child:
-              isLoading // Mostra una schermata di caricamento se isLoading è true
-                  ? Center(
-                      child: CircularProgressIndicator(),
-                    )
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Expanded(
-                          child: SingleChildScrollView(
-                            child: Wrap(
-                              alignment: WrapAlignment.center,
-                              children: items.asMap().entries.map((entry) {
-                                final index = entry.key;
-                                final item = entry.value;
-                                final isSelected = index ==
-                                    selectedIndex; // Check if this is the selected index
-
-                                return Padding(
-                                  padding: const EdgeInsets.all(
-                                      8.0), // Spazio intorno al riquadro
-                                  child: InkWell(
-                                    onTap: () {
-                                      // Ignora l'azione se l'elemento è disabilitato
-                                      if (disableRow[index]) {
-                                        return;
-                                      }
-                                      setState(() {
-                                        selectedIndex = index;
-                                        _updateFocus();
-                                        updateAvailableLetters();
-                                      });
-                                    },
-                                    child: Container(
-                                      color: isSelected
-                                          ? Color(0xb94bd8ff)
-                                          : Colors
-                                              .transparent, // Imposta il colore di sfondo se selezionato
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: item.split('').map((char) {
-                                          if (char != ' ') {
-                                            return Container(
-                                              width:
-                                                  boxWidth, // Adatta la larghezza in base alla lunghezza massima
-                                              height:
-                                                  50, // Imposta l'altezza fissa del riquadro bianco
-                                              margin: EdgeInsets.symmetric(
-                                                  horizontal:
-                                                      4), // Aggiunge spazio tra le caselle della stessa riga
-                                              decoration: BoxDecoration(
-                                                color: Colors.white,
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                              ),
-                                              alignment: Alignment.center,
-                                              child: FittedBox(
-                                                fit: BoxFit.scaleDown,
-                                                child: Text(
-                                                  char,
-                                                  style: TextStyle(
-                                                    fontSize: 24,
-                                                  ),
-                                                ),
-                                              ),
-                                            );
-                                          } else {
-                                            return SizedBox(width: 16);
-                                          }
-                                        }).toList(),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                        ),
-                        Wrap(
+          color: Colors.blue,
+          child: isLoading
+              ? Center(child: CircularProgressIndicator())
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Wrap(
                           alignment: WrapAlignment.center,
-                          children: availableLetters.map((letter) {
+                          children: items.asMap().entries.map((entry) {
+                            final index = entry.key;
+                            final item = entry.value;
+                            final isSelected = index == selectedIndex;
+
                             return Padding(
-                              padding: const EdgeInsets.all(4.0),
+                              padding: const EdgeInsets.all(8.0),
                               child: InkWell(
                                 onTap: () {
-                                  _onLetterTap(letter);
+                                  if (disableRow[index]) return;
+                                  setState(() {
+                                    selectedIndex = index;
+                                    _updateFocus();
+                                    updateAvailableLetters();
+                                  });
                                 },
                                 child: Container(
-                                  width: 40,
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    letter,
-                                    style: TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                  color: isSelected
+                                      ? Color(0xb94bd8ff)
+                                      : Colors.transparent,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: item.split('').map((char) {
+                                      if (char != ' ') {
+                                        return Container(
+                                          width: boxWidth,
+                                          height: 50,
+                                          margin: EdgeInsets.symmetric(
+                                              horizontal: 4),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          alignment: Alignment.center,
+                                          child: FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            child: Text(
+                                              char,
+                                              style: TextStyle(fontSize: 24),
+                                            ),
+                                          ),
+                                        );
+                                      } else {
+                                        return SizedBox(width: 16);
+                                      }
+                                    }).toList(),
                                   ),
                                 ),
                               ),
                             );
                           }).toList(),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: ElevatedButton(
-                            onPressed: _resetSelectedWord,
-                            child: Text('Clean'),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      children: availableLetters.map((letter) {
+                        return Padding(
+                          padding: const EdgeInsets.all(4.0),
+                          child: InkWell(
+                            onTap: () {
+                              _onLetterTap(letter);
+                            },
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                letter,
+                                style: TextStyle(
+                                    fontSize: 24, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: ElevatedButton(
+                        onPressed: _resetSelectedWord,
+                        child: Text('Clean'),
+                      ),
+                    ),
+                  ],
+                ),
         ),
         bottomNavigationBar: BottomAppBar(
           child: Padding(
@@ -292,11 +277,11 @@ class _GamePageState extends State<GamePage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Punteggio: $score', // Mostra il punteggio
+                  'Punteggio: $score',
                   style: TextStyle(fontSize: 18.0),
                 ),
                 Text(
-                  _timerManager.getFormattedTime(), // Mostra il timer
+                  _timerManager.getFormattedTime(),
                   style: TextStyle(fontSize: 18.0),
                 ),
               ],
@@ -328,7 +313,7 @@ class _GamePageState extends State<GamePage> {
             if (message == 'Completato')
               ElevatedButton(
                 onPressed: () {
-                  // Vai al livello successivo
+                  // Go to the next level
                 },
                 child: Text('Livello Successivo'),
               ),
@@ -346,7 +331,6 @@ class _GamePageState extends State<GamePage> {
   }
 
   void _showScorePopup(int points) {
-    // Pulisce la text area prima di mostrare il popup del punteggio
     OverlayEntry overlayEntry;
     overlayEntry = OverlayEntry(
       builder: (context) => Positioned(
@@ -371,7 +355,6 @@ class _GamePageState extends State<GamePage> {
 
     Overlay.of(context)!.insert(overlayEntry);
 
-    // Rimuove il popup dopo un breve periodo di tempo
     Future.delayed(Duration(milliseconds: 800), () {
       overlayEntry.remove();
     });
@@ -441,7 +424,6 @@ class _GamePageState extends State<GamePage> {
   int getNextIndex(int currentIndex) {
     int nextIndex = currentIndex + 1;
 
-    // Continua a cercare la prossima riga abilitata
     while (disableRow[nextIndex % items.length]) {
       nextIndex++;
     }

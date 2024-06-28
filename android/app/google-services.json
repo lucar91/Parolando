@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "213470521905",
+    "firebase_url": "https://wordstime-f42b8-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "wordstime-f42b8",
+    "storage_bucket": "wordstime-f42b8.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:213470521905:android:0180b0237a1cc6e04e4310",
+        "android_client_info": {
+          "package_name": "com.example.parolando"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCQ80zi3AUeBbBzwE9yaGR2sWmvqEBy9CQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

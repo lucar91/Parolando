@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -15,24 +16,18 @@ class _LoginPageState extends State<LoginPage> {
     setState(() {
       isLoading = true;
     });
-    Navigator.pushNamed(context, '/home_page');
     String email = emailController.text;
     String password = passwordController.text;
 
     try {
-      //Map<String, dynamic> response = await ApiService.login(email, password);
-      /*String token = response['token'];
-      int userId = response['userId'];
-      String currentUser = response['username'];
-      String userEmail = response['email'];*/
+      // Simulate login
+      await Future.delayed(Duration(seconds: 2)); // Remove this in a real case
 
-      /*SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setString('token', token);
-      await prefs.setString('username', currentUser);
-      await prefs.setInt('userId', userId);
-      await prefs.setString('userEmail', userEmail);*/
+      // Perform Firebase database read
+      await _testFirebaseRead();
 
-      Navigator.pushReplacementNamed(context, '/'); // Naviga alla home page
+      Navigator.pushReplacementNamed(
+          context, '/home_page'); // Navigate to home page
     } catch (e) {
       showDialog(
         context: context,
@@ -51,6 +46,24 @@ class _LoginPageState extends State<LoginPage> {
       setState(() {
         isLoading = false;
       });
+    }
+  }
+
+  Future<void> _testFirebaseRead() async {
+    try {
+      final DatabaseReference databaseReference =
+          FirebaseDatabase.instance.ref();
+      print('Reading data from Firebase...');
+      DatabaseEvent event =
+          await databaseReference.child('games/gameId1').once();
+      DataSnapshot snapshot = event.snapshot;
+      if (snapshot.value != null) {
+        print("Firebase data read successful: ${snapshot.value}");
+      } else {
+        print("No data found in Firebase for the specified query.");
+      }
+    } catch (e) {
+      print("Error reading data from Firebase: $e");
     }
   }
 
@@ -110,32 +123,12 @@ class _LoginPageState extends State<LoginPage> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.0),
                       ),
-                      backgroundColor:
-                          Colors.amber, // Cambia il colore del pulsante
+                      backgroundColor: Colors.amber, // Change button color
                     ),
                     child: Text('Login', style: TextStyle(fontSize: 18)),
                   ),
                   SizedBox(height: 32),
                   Divider(color: Colors.white),
-                  /*ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => RegistrationPage()),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                      backgroundColor:
-                          Colors.blueGrey, // Cambia il colore del pulsante
-                    ),
-                    child: Text('Registrati', style: TextStyle(fontSize: 18)),
-                  ),*/
                 ],
               ),
       ),
