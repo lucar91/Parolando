@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/home_page': (context) => HomePage(),
         '/login': (context) => LoginPage(),
-        '/list': (context) => GamePage(),
+        '/list': (context) => GamePage(gameId: '0', isPlayer2: false),
         '/difficulty': (context) => DifficultyPage(),
         '/challenge': (context) => ChallengePage(),
         '/new_game': (context) => NewGamePage(),

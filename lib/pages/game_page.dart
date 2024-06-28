@@ -4,6 +4,11 @@ import 'timer_manager.dart';
 import 'dart:math';
 
 class GamePage extends StatefulWidget {
+  final String gameId;
+  final bool isPlayer2;
+
+  GamePage({required this.gameId, required this.isPlayer2});
+
   @override
   _GamePageState createState() => _GamePageState();
 }
@@ -16,9 +21,10 @@ class _GamePageState extends State<GamePage> {
   List<String>? levelWords;
   List<String>? levelWordsLetters;
 
-  int score = 0; // Added score variable
-  bool isLoading = true; // Loading state variable
-  final String difficultyLevel = 'Difficoltà'; // Difficulty level
+  int score = 0;
+  int opponentScore = 0; // Added to track the opponent's score
+  bool isLoading = true;
+  final String difficultyLevel = 'Difficoltà';
 
   late TimerManager _timerManager;
   late FocusNode _textFocusNode;
@@ -28,7 +34,6 @@ class _GamePageState extends State<GamePage> {
   Map<int, String> initialWords = {};
 
   final DatabaseReference _databaseReference = FirebaseDatabase.instance.ref();
-  String gameId = "gameId1"; // Game ID, can be dynamic based on your needs.
 
   @override
   void initState() {
@@ -40,6 +45,10 @@ class _GamePageState extends State<GamePage> {
     _timerManager = TimerManager(300,
         onTimerUpdate: _onTimerUpdate, onTimeExpired: _onTimeExpired);
     _timerManager.startTimer();
+    _listenForScoreChanges(); // Listen for score changes in Firebase
+    if (!widget.isPlayer2) {
+      _listenForPlayer2Connection(); // Listen for player2 connection if current player is player1
+    }
   }
 
   @override
@@ -63,7 +72,7 @@ class _GamePageState extends State<GamePage> {
     try {
       print('Reading data from Firebase...');
       DatabaseEvent event =
-          await _databaseReference.child('games/$gameId').once();
+          await _databaseReference.child('games/${widget.gameId}').once();
       DataSnapshot snapshot = event.snapshot;
 
       if (snapshot.exists) {
@@ -281,6 +290,10 @@ class _GamePageState extends State<GamePage> {
                   style: TextStyle(fontSize: 18.0),
                 ),
                 Text(
+                  'Punteggio Avversario: $opponentScore',
+                  style: TextStyle(fontSize: 18.0),
+                ),
+                Text(
                   _timerManager.getFormattedTime(),
                   style: TextStyle(fontSize: 18.0),
                 ),
@@ -394,6 +407,7 @@ class _GamePageState extends State<GamePage> {
             _showPopup('Completato');
           }
           updateAvailableLetters();
+          _updateScore(items[index].length); // Update score in Firebase
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -429,5 +443,71 @@ class _GamePageState extends State<GamePage> {
     }
 
     return nextIndex % items.length;
+  }
+
+  void _updateScore(int points) async {
+    String playerPath =
+        'games/${widget.gameId}/${widget.isPlayer2 ? 'player2' : 'player1'}/score';
+
+    await _databaseReference.child(playerPath).runTransaction((currentData) {
+      int newScore = (currentData as int? ?? 0) + points;
+      return Transaction.success(newScore);
+    });
+  }
+
+  void _listenForScoreChanges() {
+    String opponentPath =
+        'games/${widget.gameId}/${widget.isPlayer2 ? 'player1' : 'player2'}/score';
+    String playerPath =
+        'games/${widget.gameId}/${widget.isPlayer2 ? 'player2' : 'player1'}/score';
+
+    // Listening for score changes for the player
+    _databaseReference.child(playerPath).onValue.listen((event) {
+      final int newScore = event.snapshot.value as int;
+      setState(() {
+        score = newScore;
+      });
+    });
+
+    // Listening for score changes for the opponent
+    _databaseReference.child(opponentPath).onValue.listen((event) {
+      final int newScore = event.snapshot.value as int;
+      setState(() {
+        opponentScore = newScore;
+      });
+    });
+  }
+
+  void _listenForPlayer2Connection() {
+    _databaseReference
+        .child('games/${widget.gameId}/player2/connected')
+        .onValue
+        .listen((event) {
+      final bool isConnected = event.snapshot.value as bool? ?? false;
+      if (isConnected) {
+        _showOpponentConnectedPopup();
+      }
+    });
+
+    // Imposta player2 come connesso
+    if (widget.isPlayer2) {
+      _databaseReference
+          .child('games/${widget.gameId}/player2/connected')
+          .set(true);
+    }
+  }
+
+  void _showOpponentConnectedPopup() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        Future.delayed(Duration(seconds: 1), () {
+          Navigator.of(context).pop();
+        });
+        return AlertDialog(
+          title: Text('Lo sfidante si è collegato'),
+        );
+      },
+    );
   }
 }
