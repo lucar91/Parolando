@@ -74,7 +74,7 @@ class _NewGamePageState extends State<NewGamePage> {
 
     // Genera un ID univoco per la partita
     gameId = Uuid().v4();
-    print(gameId);
+
     // Crea un nodo per la nuova partita nel database
     await _databaseReference.child('games/$gameId').set({
       'gameName': gameName,

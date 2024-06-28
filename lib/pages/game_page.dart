@@ -46,9 +46,6 @@ class _GamePageState extends State<GamePage> {
         onTimerUpdate: _onTimerUpdate, onTimeExpired: _onTimeExpired);
     _timerManager.startTimer();
     _listenForScoreChanges(); // Listen for score changes in Firebase
-    if (!widget.isPlayer2) {
-      _listenForPlayer2Connection(); // Listen for player2 connection if current player is player1
-    }
   }
 
   @override
@@ -69,6 +66,7 @@ class _GamePageState extends State<GamePage> {
   }
 
   Future<void> loadGameData() async {
+    print(widget.gameId);
     try {
       print('Reading data from Firebase...');
       DatabaseEvent event =
@@ -76,7 +74,8 @@ class _GamePageState extends State<GamePage> {
       DataSnapshot snapshot = event.snapshot;
 
       if (snapshot.exists) {
-        Map<String, dynamic> data = snapshot.value as Map<String, dynamic>;
+        Map<String, dynamic> data =
+            Map<String, dynamic>.from(snapshot.value as Map);
         print("Game data: $data");
 
         List<String> words = List<String>.from(data['currentWords']);
@@ -282,22 +281,25 @@ class _GamePageState extends State<GamePage> {
           child: Padding(
             padding:
                 const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Punteggio: $score',
-                  style: TextStyle(fontSize: 18.0),
-                ),
-                Text(
-                  'Punteggio Avversario: $opponentScore',
-                  style: TextStyle(fontSize: 18.0),
-                ),
-                Text(
-                  _timerManager.getFormattedTime(),
-                  style: TextStyle(fontSize: 18.0),
-                ),
-              ],
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Punteggio: $score',
+                    style: TextStyle(fontSize: 18.0),
+                  ),
+                  Text(
+                    'Punteggio Avversario: $opponentScore',
+                    style: TextStyle(fontSize: 18.0),
+                  ),
+                  Text(
+                    _timerManager.getFormattedTime(),
+                    style: TextStyle(fontSize: 18.0),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -366,7 +368,7 @@ class _GamePageState extends State<GamePage> {
       ),
     );
 
-    Overlay.of(context)!.insert(overlayEntry);
+    Overlay.of(context).insert(overlayEntry);
 
     Future.delayed(Duration(milliseconds: 800), () {
       overlayEntry.remove();
@@ -476,38 +478,5 @@ class _GamePageState extends State<GamePage> {
         opponentScore = newScore;
       });
     });
-  }
-
-  void _listenForPlayer2Connection() {
-    _databaseReference
-        .child('games/${widget.gameId}/player2/connected')
-        .onValue
-        .listen((event) {
-      final bool isConnected = event.snapshot.value as bool? ?? false;
-      if (isConnected) {
-        _showOpponentConnectedPopup();
-      }
-    });
-
-    // Imposta player2 come connesso
-    if (widget.isPlayer2) {
-      _databaseReference
-          .child('games/${widget.gameId}/player2/connected')
-          .set(true);
-    }
-  }
-
-  void _showOpponentConnectedPopup() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        Future.delayed(Duration(seconds: 1), () {
-          Navigator.of(context).pop();
-        });
-        return AlertDialog(
-          title: Text('Lo sfidante si è collegato'),
-        );
-      },
-    );
   }
 }
