@@ -1,0 +1,189 @@
+{
+  "easy": {
+    "level": {
+      "1": {
+        "numberOfWords": 3,
+        "words": {
+          "Casa": "a,s,c,a",
+          "Gatto": "o,g,t,a,t",
+          "Sole": "o,s,e,l"
+        }
+      },
+      "2": {
+        "numberOfWords": 4,
+        "words": {
+          "Gelo": "o,e,g,l",
+          "Cane": "e,c,n,a",
+          "Cena": "n,e,c,a",
+          "Lago": "a,l,g,o"
+        }
+      },
+      "3": {
+        "numberOfWords": 5,
+        "words": {
+          "Giallo": "o,g,l,l,a,i",
+          "Rosa": "s,r,a,o",
+          "Cielo": "o,l,c,i,e",
+          "Gola": "l,o,g,a",
+          "Oglio": "o,g,i,l,o"
+        }
+      },
+      "4": {
+        "numberOfWords": 5,
+        "words": {
+          "Are": "r,a,e",
+          "Cane": "n,c,e,a",
+          "Cielo": "o,l,c,i,e",
+          "Gola": "o,l,g,a",
+          "Lino": "i,l,o,n"
+        }
+      },
+      "5": {
+        "numberOfWords": 3,
+        "words": {
+          "Vita": "i,t,v,a",
+          "Peso": "s,e,o,p",
+          "Pace": "c,p,e,a"
+        }
+      },
+      "6": {
+        "numberOfWords": 4,
+        "words": {
+          "Mare": "a,e,m,r",
+          "Cane": "n,c,e,a",
+          "Fame": "a,e,f,m",
+          "Cibo": "o,c,i,b"
+        }
+      },
+      "7": {
+        "numberOfWords": 5,
+        "words": {
+          "Muro": "u,r,m,o",
+          "Riso": "r,s,o,i",
+          "Bene": "n,e,b,e",
+          "Lama": "m,a,l,a",
+          "Baco": "b,c,a,o"
+        }
+      },
+      "8": {
+        "numberOfWords": 5,
+        "words": {
+          "Vino": "o,i,n,v",
+          "Sale": "e,l,a,s",
+          "Seme": "m,e,s,e",
+          "Pera": "r,a,e,p",
+          "Piuma": "u,i,m,a,p"
+        }
+      },
+      "9": {
+        "numberOfWords": 4,
+        "words": {
+          "Cola": "a,l,o,c",
+          "Casa": "s,c,a,a",
+          "Sole": "o,l,e,s",
+          "Sabbia": "a,b,b,a,s"
+        }
+      },
+      "10": {
+        "numberOfWords": 3,
+        "words": {
+          "Mare": "e,m,r,a",
+          "Fame": "f,a,e,m",
+          "Cibo": "i,c,b,o"
+        }
+      },
+      "11": {
+        "numberOfWords": 4,
+        "words": {
+          "Luna": "a,n,u,l",
+          "Piano": "o,i,a,n,p",
+          "Sabbia": "i,b,a,s,a",
+          "Seme": "s,m,e,e"
+        }
+      },
+      "12": {
+        "numberOfWords": 5,
+        "words": {
+          "Terra": "r,t,a,e,r",
+          "Pera": "a,p,r,e",
+          "Cola": "o,a,c,l",
+          "Miele": "i,e,e,m,l",
+          "Pista": "s,i,a,t,p"
+        }
+      },
+      "13": {
+        "numberOfWords": 4,
+        "words": {
+          "Bene": "n,e,e,b",
+          "Pila": "a,p,l,i",
+          "Puro": "u,r,o,p",
+          "Cibo": "i,c,b,o"
+        }
+      },
+      "14": {
+        "numberOfWords": 5,
+        "words": {
+          "Foglio": "o,f,l,g,i",
+          "Cacao": "o,c,a,c,a",
+          "Cielo": "l,o,c,e,i",
+          "Pietra": "i,t,r,e,a",
+          "Sacco": "s,c,a,c,o"
+        }
+      },
+      "15": {
+        "numberOfWords": 5,
+        "words": {
+          "Lama": "a,m,a,l",
+          "Pasta": "s,a,a,t,p",
+          "Treno": "n,r,o,e,t",
+          "Cola": "c,l,o,a",
+          "Mare": "r,a,m,e"
+        }
+      },
+      "16": {
+        "numberOfWords": 4,
+        "words": {
+          "Seme": "e,m,s,e",
+          "Miele": "i,l,e,m",
+          "Terra": "t,r,r,a",
+          "Cola": "c,l,a,o"
+        }
+      },
+      "17": {
+        "numberOfWords": 3,
+        "words": {
+          "Puro": "r,u,p,o",
+          "Cielo": "i,e,c,l",
+          "Bene": "n,e,e,b"
+        }
+      },
+      "18": {
+        "numberOfWords": 4,
+        "words": {
+          "Baco": "o,c,b,a",
+          "Bene": "e,b,n,e",
+          "Cibo": "o,c,b,i",
+          "Lama": "l,a,a,m"
+        }
+      },
+      "19": {
+        "numberOfWords": 5,
+        "words": {
+          "Fame": "f,m,e,a",
+          "Gola": "o,l,g,a",
+          "Terra": "r,a,t,e,r",
+          "Miele": "l,m,i,e,e",
+          "Cane": "n,e,a,c"
+        }
+      },
+      "20": {
+        "numberOfWords": 3,
+        "words": {
+          "Pasta": "a,t,p,s",
+          "Mare": "a,e,m,r",
+          "Sole": "s,e,o,l"
+        }
+      }
+    }
+  }
+}

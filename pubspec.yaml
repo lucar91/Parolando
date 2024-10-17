@@ -4,12 +4,19 @@ description: A new Flutter project.
 version: 1.0.0+1
 
 environment:
-  sdk: ">=3.0.0 <4.0.0"
+  sdk: ">=2.17.0 <3.0.0"
+  flutter: ">=2.5.0"
 
 dependencies:
   flutter:
     sdk: flutter
-
+  firebase_core: ^2.27.0
+  cloud_firestore: ^4.5.0
+  firebase_database: ^10.0.6
+  firebase_analytics: ^10.0.3
+  uuid: ^4.4.0
+  lints: ^2.1.1
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -18,7 +25,8 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - resources/data.json
+    - lib/resources/data.json
+    - assets/logo.png
   #  - images/a_dot_ham.jpeg
   # fonts:
   #   - family: Schyler
