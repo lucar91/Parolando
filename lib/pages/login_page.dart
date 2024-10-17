@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -26,6 +27,8 @@ class _LoginPageState extends State<LoginPage> {
       // Perform Firebase database read
       await _testFirebaseRead();
 
+      await _saveLoginSession(email);
+
       Navigator.pushReplacementNamed(
           context, '/home_page'); // Navigate to home page
     } catch (e) {
@@ -47,6 +50,14 @@ class _LoginPageState extends State<LoginPage> {
         isLoading = false;
       });
     }
+  }
+
+  Future<void> _saveLoginSession(String email) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user_email', email); // Save the user's email
+    await prefs.setBool(
+        'is_logged_in', true); // Save a flag to indicate logged in state
+    print("Session saved in SharedPreferences");
   }
 
   Future<void> _testFirebaseRead() async {
