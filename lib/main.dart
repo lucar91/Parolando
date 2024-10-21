@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Aggiungi questo import
 import 'pages/api/firebase_options.dart';
 import 'pages/home_page.dart';
 import 'pages/difficulty_page.dart';
@@ -13,14 +14,25 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(MyApp());
+
+  // Controlla se l'utente è loggato
+  final prefs = await SharedPreferences.getInstance();
+  bool? isLoggedIn = prefs.getBool('is_logged_in') ?? false;
+
+  runApp(MyApp(isLoggedIn: isLoggedIn));
 }
 
 class MyApp extends StatelessWidget {
+  final bool isLoggedIn;
+
+  // Costruttore per ricevere lo stato del login
+  MyApp({required this.isLoggedIn});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      initialRoute: '/login',
+      // Imposta la route iniziale in base allo stato di login
+      initialRoute: isLoggedIn ? '/home_page' : '/login',
       routes: {
         '/home_page': (context) => HomePage(),
         '/login': (context) => LoginPage(),
