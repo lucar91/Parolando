@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Aggiungi questo import
 import 'pages/api/firebase_options.dart';
-import 'pages/home_page.dart';
-import 'pages/difficulty_page.dart';
-import 'pages/game_page.dart';
-import 'pages/challenge_page.dart';
-import 'pages/new_game_page.dart';
+import 'pages/main_menu_page.dart';
+import 'pages/gameHandler/training_difficulty_page.dart';
+import 'pages/gameHandler/game_page.dart';
+import 'pages/gameHandler/challenge_mode_page.dart';
+import 'pages/gameHandler/new_challenge_page.dart';
 import 'pages/login_page.dart';
 
 void main() async {
@@ -34,12 +34,12 @@ class MyApp extends StatelessWidget {
       // Imposta la route iniziale in base allo stato di login
       initialRoute: isLoggedIn ? '/home_page' : '/login',
       routes: {
-        '/home_page': (context) => HomePage(),
+        '/home_page': (context) => MainMenuPage(),
         '/login': (context) => LoginPage(),
-        '/list': (context) => GamePage(gameId: '0', isPlayer2: false),
-        '/difficulty': (context) => DifficultyPage(),
-        '/challenge': (context) => ChallengePage(),
-        '/new_game': (context) => NewGamePage(),
+        '/game': (context) => GamePage(gameId: '0', isPlayer2: false),
+        '/training': (context) => TrainingDifficultyPage(),
+        '/challenge': (context) => ChallengeModePage(),
+        '/new_game': (context) => NewChallengePage(),
       },
     );
   }

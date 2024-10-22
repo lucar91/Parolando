@@ -18,7 +18,7 @@ class _LoginPageState extends State<LoginPage> {
       isLoading = true;
     });
     String email = emailController.text;
-    String password = passwordController.text;
+    //String password = passwordController.text;
 
     try {
       // Simulate login
